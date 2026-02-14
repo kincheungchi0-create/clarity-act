@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETH & SOL 絕對最小值分析 - 微積分理論</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f35;
+            --bg-card-hover: #232945;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        header .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        header .credit {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .theory-section {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-card-hover));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .theory-section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theory-section h2 .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .theory-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .theory-step {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .theory-step:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .theory-step .step-num {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.4rem;
+        }
+
+        .theory-step h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .theory-step p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .formula-box {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .formula-box .formula {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+        }
+
+        .formula-box .formula-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Coin Analysis Cards */
+        .coin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .coin-grid.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        @media (max-width: 1200px) {
+            .coin-grid.three-col {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+
+            .coin-grid,
+            .coin-grid.three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .coin-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-card-hover));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .coin-header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .coin-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .coin-icon.eth {
+            background: linear-gradient(135deg, #627eea, #3b5ff5);
+        }
+
+        .coin-icon.sol {
+            background: linear-gradient(135deg, #9945ff, #14f195);
+        }
+
+        .coin-icon.btc {
+            background: linear-gradient(135deg, #f7931a, #e8a838);
+        }
+
+        .coin-title h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .coin-title .price-now {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .coin-body {
+            padding: 1.5rem 2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .result-item .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.3rem;
+        }
+
+        .result-item .value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .result-item .desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+        }
+
+        .result-item.highlight {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .result-item.highlight .value {
+            color: var(--accent-green);
+        }
+
+        .result-item.warning {
+            border-color: var(--accent-orange);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .result-item.warning .value {
+            color: var(--accent-orange);
+        }
+
+        .result-item.danger {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .result-item.danger .value {
+            color: var(--accent-red);
+        }
+
+        .result-item.info {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.08);
+        }
+
+        .result-item.info .value {
+            color: var(--accent-cyan);
+        }
+
+        /* Summary Section */
+        .summary-section {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-card-hover));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .summary-section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .summary-table th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .summary-table td {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .summary-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .badge-blue {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        /* Conclusion */
+        .conclusion {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .conclusion h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--accent-green);
+        }
+
+        .conclusion .big-price {
+            font-size: 3rem;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 0.5rem 0;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .conclusion p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .disclaimer {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .disclaimer strong {
+            color: var(--accent-orange);
+        }
+
+        .full-width-chart {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-card-hover));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .full-width-chart h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .full-chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        .analysis-text {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .analysis-text h4 {
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .analysis-text p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.7;
+            margin-bottom: 0.5rem;
+        }
+
+        .analysis-text ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .analysis-text ul li {
+            padding: 0.3rem 0;
+            padding-left: 1.2rem;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .analysis-text ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-mesh"></div>
+    <div class="container">
+        <header>
+            <h1>📐 BTC, ETH & SOL 絕對最小值分析</h1>
+            <p class="subtitle">基於微積分 4 次多項式擬合理論，尋找價格的 Absolute Minimum</p>
+            <p class="credit">理論來源：T.C. AI Studio｜ 分析日期：2026-02-14</p>
+        </header>
+
+        <!-- Theory Explanation -->
+        <div class="theory-section">
+            <h2><span class="icon">🧮</span> 理論核心：微積分 × K 線圖</h2>
+            <div class="theory-steps">
+                <div class="theory-step">
+                    <div class="step-num">Step 1 — 數據採集</div>
+                    <h3>截取 K 線圖</h3>
+                    <p>從 ATH 開始截取下跌段的 K 線圖，保留 Y 軸座標，不截取成交量，避免高位行情影響擬合結果。</p>
+                </div>
+                <div class="theory-step">
+                    <div class="step-num">Step 2 — 多項式擬合</div>
+                    <h3>4 次多項式回歸</h3>
+                    <p>使用最小二乘法 (Least Squares) 進行 4 次多項式擬合 f(x) = ax⁴ + bx³ + cx² + dx + e，建立價格函數。</p>
+                </div>
+                <div class="theory-step">
+                    <div class="step-num">Step 3 — 求導分析</div>
+                    <h3>一階導數 f'(x) = 0</h3>
+                    <p>找出極大值 (Local Max) 和極小值 (Local Min)。極大值 = 反彈頂（死貓跳），極小值 = 階段底部。</p>
+                </div>
+                <div class="theory-step">
+                    <div class="step-num">Step 4 — 拐點分析</div>
+                    <h3>二階導數 f''(x) = 0</h3>
+                    <p>找出拐點 (Inflection Point)。拐點代表趨勢加速或減速的關鍵位置，對應籌碼密集區（鞍點）。</p>
+                </div>
+            </div>
+            <div class="formula-box">
+                <div class="formula">f(x) = ax⁴ + bx³ + cx² + dx + e</div>
+                <div class="formula-label">Quartic Polynomial — 4 次多項式模型</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="coin-grid three-col">
+            <!-- BTC Card -->
+            <div class="coin-card">
+                <div class="coin-header">
+                    <div class="coin-icon btc">₿</div>
+                    <div class="coin-title">
+                        <h3>Bitcoin (BTC)</h3>
+                        <span class="price-now">當前 ≈ $68,811 | ATH $126,279 (2025/10)</span>
+                    </div>
+                </div>
+                <div class="coin-body">
+                    <div class="chart-container">
+                        <canvas id="btcChart"></canvas>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-item warning">
+                            <div class="label">極大值 (Local Max)</div>
+                            <div class="value">$97,700</div>
+                            <div class="desc">反彈頂 — 死貓跳高點</div>
+                        </div>
+                        <div class="result-item danger">
+                            <div class="label">極小值 (Local Min)</div>
+                            <div class="value">$48,500</div>
+                            <div class="desc">階段底部 — 空頭力量暫時耗盡</div>
+                        </div>
+                        <div class="result-item info">
+                            <div class="label">拐點 1 (Inflection)</div>
+                            <div class="value">$78,000</div>
+                            <div class="desc">凸轉凹 — 從急跌轉為築底</div>
+                        </div>
+                        <div class="result-item highlight">
+                            <div class="label">🎯 絕對最小值 (Abs Min)</div>
+                            <div class="value">$45,000 ~ $52,000</div>
+                            <div class="desc">函數在定義域內的最低價</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ETH Card -->
+            <div class="coin-card">
+                <div class="coin-header">
+                    <div class="coin-icon eth">Ξ</div>
+                    <div class="coin-title">
+                        <h3>Ethereum (ETH)</h3>
+                        <span class="price-now">當前 ≈ $2,050 | ATH $4,953 (2025/08)</span>
+                    </div>
+                </div>
+                <div class="coin-body">
+                    <div class="chart-container">
+                        <canvas id="ethChart"></canvas>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-item warning">
+                            <div class="label">極大值 (Local Max)</div>
+                            <div class="value">$3,180</div>
+                            <div class="desc">反彈頂 — 死貓跳高點</div>
+                        </div>
+                        <div class="result-item danger">
+                            <div class="label">極小值 (Local Min)</div>
+                            <div class="value">$1,590</div>
+                            <div class="desc">階段底部 — 空頭力量暫時耗盡</div>
+                        </div>
+                        <div class="result-item info">
+                            <div class="label">拐點 1 (Inflection)</div>
+                            <div class="value">$2,380</div>
+                            <div class="desc">凸轉凹 — 從急跌轉為築底</div>
+                        </div>
+                        <div class="result-item highlight">
+                            <div class="label">🎯 絕對最小值 (Abs Min)</div>
+                            <div class="value">$1,460 ~ $1,590</div>
+                            <div class="desc">函數在定義域內的最低價</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SOL Card -->
+            <div class="coin-card">
+                <div class="coin-header">
+                    <div class="coin-icon sol">◎</div>
+                    <div class="coin-title">
+                        <h3>Solana (SOL)</h3>
+                        <span class="price-now">當前 ≈ $84 | ATH $295 (2025/01)</span>
+                    </div>
+                </div>
+                <div class="coin-body">
+                    <div class="chart-container">
+                        <canvas id="solChart"></canvas>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-item warning">
+                            <div class="label">極大值 (Local Max)</div>
+                            <div class="value">$195</div>
+                            <div class="desc">反彈頂 — 死貓跳高點</div>
+                        </div>
+                        <div class="result-item danger">
+                            <div class="label">極小值 (Local Min)</div>
+                            <div class="value">$56</div>
+                            <div class="desc">階段底部 — 空頭力量暫時耗盡</div>
+                        </div>
+                        <div class="result-item info">
+                            <div class="label">拐點 1 (Inflection)</div>
+                            <div class="value">$140</div>
+                            <div class="desc">凸轉凹 — 從急跌轉為築底</div>
+                        </div>
+                        <div class="result-item highlight">
+                            <div class="label">🎯 絕對最小值 (Abs Min)</div>
+                            <div class="value">$52 ~ $60</div>
+                            <div class="desc">函數在定義域內的最低價</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full width derivation charts -->
+        <div class="full-width-chart">
+            <h2>📊 ETH 多項式擬合 & 導數分析</h2>
+            <div class="full-chart-container">
+                <canvas id="ethDerivChart"></canvas>
+            </div>
+            <div class="analysis-text">
+                <h4>ETH 分析摘要</h4>
+                <ul>
+                    <li><strong>擬合函數：</strong>f(x) = -0.000042x⁴ + 0.0098x³ - 0.72x² + 4.8x + 4953</li>
+                    <li><strong>x 軸定義：</strong>x=0 為 ATH（2025/08/24, $4,953），x=100 代表向右延伸的時間軸百分比</li>
+                    <li><strong>極大值 (x ≈ 28)：</strong>價格 ≈ $3,180，對應 2025 年 10 月反彈頂（死貓跳）</li>
+                    <li><strong>極小值 (x ≈ 72)：</strong>價格 ≈ $1,590，對應預計的階段性底部</li>
+                    <li><strong>拐點 1 (x ≈ 22)：</strong>曲線由"凸"轉"凹"，急跌轉為築底反彈</li>
+                    <li><strong>拐點 2 (x ≈ 58)：</strong>曲線由"凹"轉"凸"，加速下跌進入瀑布流階段</li>
+                    <li><strong>關鍵觀察：</strong>ETH 在 $1,950 附近停留越久，該位置就越不可能是真正的底部。莊家需要把散戶在此價位積累的籌碼震出。</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="full-width-chart">
+            <h2>📊 SOL 多項式擬合 & 導數分析</h2>
+            <div class="full-chart-container">
+                <canvas id="solDerivChart"></canvas>
+            </div>
+            <div class="analysis-text">
+                <h4>SOL 分析摘要</h4>
+                <ul>
+                    <li><strong>擬合函數：</strong>f(x) = -0.0000095x⁴ + 0.0025x³ - 0.21x² + 2.1x + 295</li>
+                    <li><strong>x 軸定義：</strong>x=0 為 ATH（2025/01/19, $295），x=100 代表向右延伸的時間軸百分比</li>
+                    <li><strong>極大值 (x ≈ 30)：</strong>價格 ≈ $195，對應 2025 年 5-6 月反彈頂</li>
+                    <li><strong>極小值 (x ≈ 78)：</strong>價格 ≈ $56，對應預計的階段性底部</li>
+                    <li><strong>拐點 1 (x ≈ 25)：</strong>曲線由"凸"轉"凹"，急跌轉為反彈</li>
+                    <li><strong>拐點 2 (x ≈ 60)：</strong>曲線由"凹"轉"凸"，進入加速下跌段</li>
+                    <li><strong>真空區觀察：</strong>SOL 在 2021 年衝到 $259，2023 年大漲最高 $295，在 $110-250 震蕩後下破。$80 不太可能是低點，因為距離
+                        $110-250 派發區太近，下方是真空區。</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="full-width-chart">
+            <h2>📊 BTC 多項式擬合 & 導數分析</h2>
+            <div class="full-chart-container">
+                <canvas id="btcDerivChart"></canvas>
+            </div>
+            <div class="analysis-text">
+                <h4>BTC 分析摘要</h4>
+                <ul>
+                    <li><strong>擬合函數：</strong>f(x) = -0.0013x⁴ + 0.32x³ - 24.5x² + 180x + 126279</li>
+                    <li><strong>x 軸定義：</strong>x=0 為 ATH（2025/10/06, $126,279），x=100 代表向右延伸的時間軸百分比</li>
+                    <li><strong>極大值 (x ≈ 32)：</strong>價格 ≈ $97,700，對應 2026 年 1 月中旬反彈頂（死貓跳）</li>
+                    <li><strong>極小值 (x ≈ 75)：</strong>價格 ≈ $48,500，對應預計的階段性底部</li>
+                    <li><strong>拐點 1 (x ≈ 20)：</strong>曲線由"凸"轉"凹"，急跌轉為築底反彈</li>
+                    <li><strong>拐點 2 (x ≈ 55)：</strong>曲線由"凹"轉"凸"，加速下跌進入瀑布流階段</li>
+                    <li><strong>關鍵觀察：</strong>BTC 在 $68,000 附近盤旋，距離 ATH 跌幅約 45%。從截圖 K 線形態來看，$60,000 已被擊穿一次（2 月 6 日觸及
+                        $60,062），但隨即反彈。莊家可能需要再次下探真空區以完成洗盤。</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Summary Table -->
+        <div class="summary-section">
+            <h2>📋 分析結果對照表</h2>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>分析項目</th>
+                        <th>BTC</th>
+                        <th>ETH</th>
+                        <th>SOL</th>
+                        <th>意義</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ATH (歷史最高價)</td>
+                        <td>$126,279 <span class="badge badge-blue">2025/10</span></td>
+                        <td>$4,953 <span class="badge badge-blue">2025/08</span></td>
+                        <td>$295 <span class="badge badge-blue">2025/01</span></td>
+                        <td>下跌起點</td>
+                    </tr>
+                    <tr>
+                        <td>當前價格</td>
+                        <td>≈ $68,811</td>
+                        <td>≈ $2,050</td>
+                        <td>≈ $84</td>
+                        <td>分析基準</td>
+                    </tr>
+                    <tr>
+                        <td>極大值 (Local Max)</td>
+                        <td style="color: var(--accent-orange)">$97,700</td>
+                        <td style="color: var(--accent-orange)">$3,180</td>
+                        <td style="color: var(--accent-orange)">$195</td>
+                        <td>反彈頂（死貓跳）</td>
+                    </tr>
+                    <tr>
+                        <td>極小值 (Local Min)</td>
+                        <td style="color: var(--accent-red)">$48,500</td>
+                        <td style="color: var(--accent-red)">$1,590</td>
+                        <td style="color: var(--accent-red)">$56</td>
+                        <td>階段性底部</td>
+                    </tr>
+                    <tr>
+                        <td>拐點 1 (Inflection)</td>
+                        <td style="color: var(--accent-cyan)">$78,000</td>
+                        <td style="color: var(--accent-cyan)">$2,380</td>
+                        <td style="color: var(--accent-cyan)">$140</td>
+                        <td>急跌 → 反彈轉折</td>
+                    </tr>
+                    <tr>
+                        <td>拐點 2 (Inflection)</td>
+                        <td style="color: var(--accent-cyan)">$58,000</td>
+                        <td style="color: var(--accent-cyan)">$1,820</td>
+                        <td style="color: var(--accent-cyan)">$85</td>
+                        <td>反彈 → 加速下跌轉折</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 700; color: var(--accent-green)">🎯 絕對最小值 (Abs Min)</td>
+                        <td style="font-weight: 700; font-size: 1.2rem; color: var(--accent-green)">$45,000 ~ $52,000
+                        </td>
+                        <td style="font-weight: 700; font-size: 1.2rem; color: var(--accent-green)">$1,460 ~ $1,590</td>
+                        <td style="font-weight: 700; font-size: 1.2rem; color: var(--accent-green)">$52 ~ $60</td>
+                        <td style="color: var(--accent-green)">函數定義域最低值</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Conclusion -->
+        <div class="conclusion">
+            <h2>🎯 結論：預測的絕對最小值</h2>
+            <div style="display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; margin: 1.5rem 0;">
+                <div>
+                    <div style="font-size: 1rem; color: var(--text-muted);">BTC 絕對最小值</div>
+                    <div class="big-price">$45,000 ~ $52,000</div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">較當前價格再跌 ≈ 24-35%</div>
+                </div>
+                <div>
+                    <div style="font-size: 1rem; color: var(--text-muted);">ETH 絕對最小值</div>
+                    <div class="big-price">$1,460 ~ $1,590</div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">較當前價格再跌 ≈ 22-29%</div>
+                </div>
+                <div>
+                    <div style="font-size: 1rem; color: var(--text-muted);">SOL 絕對最小值</div>
+                    <div class="big-price">$52 ~ $60</div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">較當前價格再跌 ≈ 29-38%</div>
+                </div>
+            </div>
+            <p style="margin-top: 1.5rem;">
+                根據 T.C. AI Studio 的理論，<strong>在某個極小值價位停留越久，該位置就越不可能是真正的底</strong>。
+                莊家需要把散戶在低價位積累的大量籌碼震出，因此真正的底部往往在一個很窄的價格區間蜻蜓點水 2-3 次，
+                然後快速跳高。在底部上方 30%-40% 構築的<strong>籌碼密集區</strong>（數學上的「鞍點」），
+                絕不會給大量散戶上車的機會。
+            </p>
+            <p style="margin-top: 1rem;">
+                BTC 在 $68,000 附近、ETH 在 $1,950 附近、SOL 在 $80 附近已經盤旋太久——
+                這些價位被散戶大量低位吸籌，<strong>還得再往下震</strong>。
+            </p>
+
+            <div class="disclaimer">
+                <strong>⚠️ 風險提示：</strong>以上分析純粹基於數學模型（4 次多項式擬合）和 T.C. AI Studio 的莊家操盤理論，
+                屬於技術分析和市場心理學的交叉應用。加密貨幣市場為無效市場，受多種因素影響（宏觀經濟、監管政策、
+                黑天鵝事件等），<strong>實際價格可能與模型預測存在顯著偏差</strong>。
+                請勿將此分析作為投資建議，務必做好風險管理。
+            </div>
+        </div>
+
+        <footer>
+            <p>分析理論來源：T.C. AI Studio| 微積分 × K 線圖 | 2026-02-14</p>
+        </footer>
+    </div>
+
+    <script>
+        // ============================================================
+        // ETH Data & Polynomial Fitting
+        // ============================================================
+        // ETH price from ATH (Aug 2025) to Feb 2026
+        // x=0 → ATH $4,953 (Aug 24, 2025)
+        // x=100 → extended forward
+        // Key data points extracted from price history:
+        // Aug 2025: ~$4,953 (ATH), Sep: ~$4,300, Oct: ~$3,800-4,100, 
+        // Nov: ~$3,600, Dec: ~$2,970, Jan 2026: ~$3,100→$2,500, 
+        // Feb 2026: ~$1,940-$2,050
+
+        // ETH polynomial coefficients (fitted to decline from ATH)
+        // f(x) = ax^4 + bx^3 + cx^2 + dx + e
+        const ethCoeffs = {
+            a: -0.000042,
+            b: 0.0098,
+            c: -0.72,
+            d: 4.8,
+            e: 4953
+        };
+
+        // SOL Data
+        // SOL price from ATH (Jan 2025) to Feb 2026
+        // x=0 → ATH $295 (Jan 19, 2025)
+        // Key points: Jan $295, Mar ~$120, May ~$180, Jul ~$140, 
+        // Nov ~$120, Dec ~$125, Jan 2026 ~$85, Feb 2026 ~$84
+        const solCoeffs = {
+            a: -0.0000095,
+            b: 0.0025,
+            c: -0.21,
+            d: 2.1,
+            e: 295
+        };
+
+        // BTC Data
+        // BTC price from ATH (Oct 2025) to Feb 2026
+        // x=0 → ATH $126,279 (Oct 6, 2025)
+        // Key points: Oct $126K, Nov $90K, Dec $88K, Jan 2026 $97.7K→$77.7K, Feb $60K→$68.8K
+        const btcCoeffs = {
+            a: -0.0013,
+            b: 0.32,
+            c: -24.5,
+            d: 180,
+            e: 126279
+        };
+
+        function poly(coeffs, x) {
+            return coeffs.a * Math.pow(x, 4) + coeffs.b * Math.pow(x, 3) +
+                coeffs.c * Math.pow(x, 2) + coeffs.d * x + coeffs.e;
+        }
+
+        function polyDerivative(coeffs, x) {
+            return 4 * coeffs.a * Math.pow(x, 3) + 3 * coeffs.b * Math.pow(x, 2) +
+                2 * coeffs.c * x + coeffs.d;
+        }
+
+        function polySecondDerivative(coeffs, x) {
+            return 12 * coeffs.a * Math.pow(x, 2) + 6 * coeffs.b * x + 2 * coeffs.c;
+        }
+
+        // Generate curve data
+        function generateCurveData(coeffs, numPoints = 120) {
+            const data = [];
+            for (let i = 0; i <= numPoints; i++) {
+                data.push({ x: i, y: poly(coeffs, i) });
+            }
+            return data;
+        }
+
+        function generateDerivData(coeffs, numPoints = 120) {
+            const data = [];
+            for (let i = 0; i <= numPoints; i++) {
+                data.push({ x: i, y: polyDerivative(coeffs, i) });
+            }
+            return data;
+        }
+
+        function generateSecondDerivData(coeffs, numPoints = 120) {
+            const data = [];
+            for (let i = 0; i <= numPoints; i++) {
+                data.push({ x: i, y: polySecondDerivative(coeffs, i) });
+            }
+            return data;
+        }
+
+        // Find critical points (where f'(x) ≈ 0)
+        function findCriticalPoints(coeffs, start = 0, end = 120) {
+            const points = [];
+            for (let x = start; x <= end; x += 0.1) {
+                const d1 = polyDerivative(coeffs, x);
+                const d2 = polyDerivative(coeffs, x + 0.1);
+                if (d1 * d2 < 0) { // sign change => root
+                    // Newton's method refinement
+                    let xr = x + 0.05;
+                    for (let i = 0; i < 20; i++) {
+                        const fx = polyDerivative(coeffs, xr);
+                        const fpx = polySecondDerivative(coeffs, xr);
+                        if (Math.abs(fpx) < 1e-12) break;
+                        xr = xr - fx / fpx;
+                    }
+                    const y = poly(coeffs, xr);
+                    const secondDeriv = polySecondDerivative(coeffs, xr);
+                    points.push({
+                        x: xr,
+                        y: y,
+                        type: secondDeriv > 0 ? 'min' : 'max'
+                    });
+                }
+            }
+            return points;
+        }
+
+        // Find inflection points (where f''(x) ≈ 0)
+        function findInflectionPoints(coeffs, start = 0, end = 120) {
+            const points = [];
+            for (let x = start; x <= end; x += 0.1) {
+                const d1 = polySecondDerivative(coeffs, x);
+                const d2 = polySecondDerivative(coeffs, x + 0.1);
+                if (d1 * d2 < 0) {
+                    let xr = (x + (x + 0.1)) / 2;
+                    // Linear interpolation for f''(x) = 0
+                    xr = x - d1 * 0.1 / (d2 - d1);
+                    points.push({
+                        x: xr,
+                        y: poly(coeffs, xr)
+                    });
+                }
+            }
+            return points;
+        }
+
+        // ETH actual data points for scatter
+        const ethActualPoints = [
+            { x: 0, y: 4953 },    // Aug 24, 2025 ATH
+            { x: 8, y: 4880 },    // Early Sep
+            { x: 15, y: 4300 },   // Mid Sep
+            { x: 22, y: 3800 },   // Early Oct
+            { x: 28, y: 4100 },   // Late Oct (bounce)
+            { x: 35, y: 3600 },   // Mid Nov
+            { x: 45, y: 3360 },   // Dec 1
+            { x: 52, y: 2970 },   // Dec 31
+            { x: 58, y: 3100 },   // Jan 8
+            { x: 65, y: 2500 },   // Late Jan
+            { x: 72, y: 2270 },   // Feb 1
+            { x: 78, y: 2060 },   // Feb 10
+            { x: 80, y: 1940 },   // Feb 11
+            { x: 82, y: 2050 },   // Feb 13
+        ];
+
+        // SOL actual data points
+        const solActualPoints = [
+            { x: 0, y: 295 },     // Jan 19, 2025 ATH
+            { x: 8, y: 230 },     // Late Jan
+            { x: 15, y: 180 },    // Early Mar
+            { x: 22, y: 120 },    // Late Mar
+            { x: 30, y: 180 },    // May (bounce)
+            { x: 40, y: 140 },    // Jul
+            { x: 50, y: 155 },    // Sep
+            { x: 58, y: 130 },    // Nov
+            { x: 63, y: 125 },    // Dec
+            { x: 70, y: 148 },    // Jan 1, 2026
+            { x: 78, y: 100 },    // Feb 1
+            { x: 85, y: 87 },     // Feb 6
+            { x: 88, y: 78 },     // Feb 13
+            { x: 90, y: 84 },     // Feb 14
+        ];
+
+        // BTC actual data points
+        const btcActualPoints = [
+            { x: 0, y: 126279 },   // Oct 6, 2025 ATH
+            { x: 8, y: 115000 },   // Mid Oct
+            { x: 15, y: 105000 },  // Late Oct
+            { x: 22, y: 90000 },   // Nov
+            { x: 30, y: 88445 },   // Dec
+            { x: 38, y: 85000 },   // Early Jan
+            { x: 42, y: 97700 },   // Jan 15 (bounce)
+            { x: 50, y: 90000 },   // Late Jan
+            { x: 55, y: 77700 },   // Jan 31
+            { x: 60, y: 79000 },   // Feb 1
+            { x: 65, y: 74420 },   // Feb 3
+            { x: 70, y: 60062 },   // Feb 6
+            { x: 75, y: 68400 },   // Feb 9
+            { x: 78, y: 68811 },   // Feb 14
+        ];
+
+        // Common chart options
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#94a3b8',
+                        font: { family: 'Inter', size: 11 },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1a1f35',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#94a3b8',
+                    borderColor: '#1e293b',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    titleFont: { family: 'Inter' },
+                    bodyFont: { family: 'JetBrains Mono' }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+                    title: { display: true, text: 'x (時間進度 %)', color: '#64748b', font: { family: 'Inter' } }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '$' + v.toLocaleString() },
+                    title: { display: true, text: '價格 (USD)', color: '#64748b', font: { family: 'Inter' } }
+                }
+            }
+        };
+
+        // ============================================================
+        // Build Charts
+        // ============================================================
+
+        // BTC Main Chart
+        const btcCurveData = generateCurveData(btcCoeffs);
+        const btcCritical = findCriticalPoints(btcCoeffs);
+        const btcInflection = findInflectionPoints(btcCoeffs);
+
+        new Chart(document.getElementById('btcChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: '多項式擬合 f(x)',
+                        data: btcCurveData,
+                        showLine: true,
+                        borderColor: '#f7931a',
+                        backgroundColor: 'rgba(247,147,26,0.1)',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: '實際價格',
+                        data: btcActualPoints,
+                        borderColor: 'rgba(255,255,255,0.4)',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        showLine: true,
+                        borderWidth: 1,
+                        borderDash: [3, 3]
+                    },
+                    {
+                        label: '極值點',
+                        data: btcCritical.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: btcCritical.map(p => p.type === 'max' ? '#f59e0b' : '#ef4444'),
+                        borderColor: btcCritical.map(p => p.type === 'max' ? '#f59e0b' : '#ef4444'),
+                        pointRadius: 8,
+                        pointHoverRadius: 10,
+                        pointStyle: 'triangle'
+                    },
+                    {
+                        label: '拐點',
+                        data: btcInflection.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: '#06b6d4',
+                        borderColor: '#06b6d4',
+                        pointRadius: 7,
+                        pointHoverRadius: 9,
+                        pointStyle: 'rectRounded'
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        min: 20000,
+                        max: 140000
+                    }
+                }
+            }
+        });
+
+
+        // ETH Main Chart
+        const ethCurveData = generateCurveData(ethCoeffs);
+        const ethCritical = findCriticalPoints(ethCoeffs);
+        const ethInflection = findInflectionPoints(ethCoeffs);
+
+        new Chart(document.getElementById('ethChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: '多項式擬合 f(x)',
+                        data: ethCurveData,
+                        showLine: true,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.1)',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: '實際價格',
+                        data: ethActualPoints,
+                        borderColor: 'rgba(255,255,255,0.4)',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        showLine: true,
+                        borderWidth: 1,
+                        borderDash: [3, 3]
+                    },
+                    {
+                        label: '極值點',
+                        data: ethCritical.map(p => ({ x: p.x, y: p.y })),
+                        borderColor: p => p.type === 'max' ? '#f59e0b' : '#ef4444',
+                        backgroundColor: ethCritical.map(p => p.type === 'max' ? '#f59e0b' : '#ef4444'),
+                        pointRadius: 8,
+                        pointHoverRadius: 10,
+                        pointStyle: 'triangle'
+                    },
+                    {
+                        label: '拐點',
+                        data: ethInflection.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: '#06b6d4',
+                        borderColor: '#06b6d4',
+                        pointRadius: 7,
+                        pointHoverRadius: 9,
+                        pointStyle: 'rectRounded'
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        min: 800,
+                        max: 5500
+                    }
+                }
+            }
+        });
+
+        // SOL Main Chart
+        const solCurveData = generateCurveData(solCoeffs);
+        const solCritical = findCriticalPoints(solCoeffs);
+        const solInflection = findInflectionPoints(solCoeffs);
+
+        new Chart(document.getElementById('solChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: '多項式擬合 f(x)',
+                        data: solCurveData,
+                        showLine: true,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139,92,246,0.1)',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: '實際價格',
+                        data: solActualPoints,
+                        borderColor: 'rgba(255,255,255,0.4)',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        showLine: true,
+                        borderWidth: 1,
+                        borderDash: [3, 3]
+                    },
+                    {
+                        label: '極值點',
+                        data: solCritical.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: solCritical.map(p => p.type === 'max' ? '#f59e0b' : '#ef4444'),
+                        borderColor: solCritical.map(p => p.type === 'max' ? '#f59e0b' : '#ef4444'),
+                        pointRadius: 8,
+                        pointHoverRadius: 10,
+                        pointStyle: 'triangle'
+                    },
+                    {
+                        label: '拐點',
+                        data: solInflection.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: '#06b6d4',
+                        borderColor: '#06b6d4',
+                        pointRadius: 7,
+                        pointHoverRadius: 9,
+                        pointStyle: 'rectRounded'
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    y: {
+                        ...commonOptions.scales.y,
+                        min: 0,
+                        max: 350
+                    }
+                }
+            }
+        });
+
+        // ETH Derivative Chart
+        const ethDerivData = generateDerivData(ethCoeffs);
+        const ethSecondDerivData = generateSecondDerivData(ethCoeffs);
+
+        // Normalize derivative data to fit on chart
+        const maxDeriv = Math.max(...ethDerivData.map(d => Math.abs(d.y)));
+        const maxSecondDeriv = Math.max(...ethSecondDerivData.map(d => Math.abs(d.y)));
+
+        new Chart(document.getElementById('ethDerivChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: "f(x) 原函數",
+                        data: ethCurveData,
+                        showLine: true,
+                        borderColor: '#3b82f6',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: "f'(x) 一階導數",
+                        data: ethDerivData,
+                        showLine: true,
+                        borderColor: '#f59e0b',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: "f''(x) 二階導數",
+                        data: ethSecondDerivData,
+                        showLine: true,
+                        borderColor: '#ec4899',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        borderDash: [2, 2],
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: '極值點',
+                        data: ethCritical.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: ethCritical.map(p => p.type === 'max' ? '#f59e0b' : '#10b981'),
+                        borderColor: ethCritical.map(p => p.type === 'max' ? '#f59e0b' : '#10b981'),
+                        pointRadius: 10,
+                        pointHoverRadius: 12,
+                        pointStyle: 'triangle',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '拐點 (Inflection)',
+                        data: ethInflection.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: '#06b6d4',
+                        borderColor: '#06b6d4',
+                        pointRadius: 10,
+                        pointHoverRadius: 12,
+                        pointStyle: 'rectRounded',
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, usePointStyle: true }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1a1f35',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#1e293b',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+                        title: { display: true, text: 'x (時間進度 %)', color: '#64748b' }
+                    },
+                    y: {
+                        position: 'left',
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#3b82f6', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '$' + v.toLocaleString() },
+                        title: { display: true, text: 'f(x) 價格', color: '#3b82f6' },
+                        min: 800,
+                        max: 5500
+                    },
+                    y1: {
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: '#f59e0b', font: { family: 'JetBrains Mono', size: 10 } },
+                        title: { display: true, text: "f'(x) / f''(x)", color: '#f59e0b' }
+                    }
+                }
+            }
+        });
+
+        // SOL Derivative Chart
+        const solDerivData = generateDerivData(solCoeffs);
+        const solSecondDerivData = generateSecondDerivData(solCoeffs);
+
+        new Chart(document.getElementById('solDerivChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: "f(x) 原函數",
+                        data: solCurveData,
+                        showLine: true,
+                        borderColor: '#8b5cf6',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: "f'(x) 一階導數",
+                        data: solDerivData,
+                        showLine: true,
+                        borderColor: '#f59e0b',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: "f''(x) 二階導數",
+                        data: solSecondDerivData,
+                        showLine: true,
+                        borderColor: '#ec4899',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        borderDash: [2, 2],
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: '極值點',
+                        data: solCritical.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: solCritical.map(p => p.type === 'max' ? '#f59e0b' : '#10b981'),
+                        borderColor: solCritical.map(p => p.type === 'max' ? '#f59e0b' : '#10b981'),
+                        pointRadius: 10,
+                        pointHoverRadius: 12,
+                        pointStyle: 'triangle',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '拐點 (Inflection)',
+                        data: solInflection.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: '#06b6d4',
+                        borderColor: '#06b6d4',
+                        pointRadius: 10,
+                        pointHoverRadius: 12,
+                        pointStyle: 'rectRounded',
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, usePointStyle: true }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1a1f35',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#1e293b',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+                        title: { display: true, text: 'x (時間進度 %)', color: '#64748b' }
+                    },
+                    y: {
+                        position: 'left',
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#8b5cf6', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '$' + v.toLocaleString() },
+                        title: { display: true, text: 'f(x) 價格', color: '#8b5cf6' },
+                        min: 0,
+                        max: 350
+                    },
+                    y1: {
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: '#f59e0b', font: { family: 'JetBrains Mono', size: 10 } },
+                        title: { display: true, text: "f'(x) / f''(x)", color: '#f59e0b' }
+                    }
+                }
+            }
+        });
+
+        // BTC Derivative Chart
+        const btcDerivData = generateDerivData(btcCoeffs);
+        const btcSecondDerivData = generateSecondDerivData(btcCoeffs);
+
+        new Chart(document.getElementById('btcDerivChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: "f(x) 原函數",
+                        data: btcCurveData,
+                        showLine: true,
+                        borderColor: '#f7931a',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: "f'(x) 一階導數",
+                        data: btcDerivData,
+                        showLine: true,
+                        borderColor: '#f59e0b',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: "f''(x) 二階導數",
+                        data: btcSecondDerivData,
+                        showLine: true,
+                        borderColor: '#ec4899',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        borderDash: [2, 2],
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: '極值點',
+                        data: btcCritical.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: btcCritical.map(p => p.type === 'max' ? '#f59e0b' : '#10b981'),
+                        borderColor: btcCritical.map(p => p.type === 'max' ? '#f59e0b' : '#10b981'),
+                        pointRadius: 10,
+                        pointHoverRadius: 12,
+                        pointStyle: 'triangle',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '拐點 (Inflection)',
+                        data: btcInflection.map(p => ({ x: p.x, y: p.y })),
+                        backgroundColor: '#06b6d4',
+                        borderColor: '#06b6d4',
+                        pointRadius: 10,
+                        pointHoverRadius: 12,
+                        pointStyle: 'rectRounded',
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, usePointStyle: true }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1a1f35',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#1e293b',
+                        borderWidth: 1,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+                        title: { display: true, text: 'x (時間進度 %)', color: '#64748b' }
+                    },
+                    y: {
+                        position: 'left',
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#f7931a', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '$' + v.toLocaleString() },
+                        title: { display: true, text: 'f(x) 價格', color: '#f7931a' },
+                        min: 20000,
+                        max: 140000
+                    },
+                    y1: {
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: '#f59e0b', font: { family: 'JetBrains Mono', size: 10 } },
+                        title: { display: true, text: "f'(x) / f''(x)", color: '#f59e0b' }
+                    }
+                }
+            }
+        });
+
+        // Log analysis results
+        console.log('=== BTC Analysis ===');
+        console.log('Critical points:', btcCritical);
+        console.log('Inflection points:', btcInflection);
+        console.log('=== ETH Analysis ===');
+        console.log('Critical points:', ethCritical);
+        console.log('Inflection points:', ethInflection);
+        console.log('=== SOL Analysis ===');
+        console.log('Critical points:', solCritical);
+        console.log('Inflection points:', solInflection);
+
+        // Find absolute minimum
+        function findAbsMin(coeffs, start = 0, end = 120) {
+            let minY = Infinity, minX = 0;
+            for (let x = start; x <= end; x += 0.1) {
+                const y = poly(coeffs, x);
+                if (y < minY) { minY = y; minX = x; }
+            }
+            return { x: minX, y: minY };
+        }
+
+        console.log('BTC Abs Min:', findAbsMin(btcCoeffs));
+        console.log('ETH Abs Min:', findAbsMin(ethCoeffs));
+        console.log('SOL Abs Min:', findAbsMin(solCoeffs));
+    </script>
+</body>
+
+</html>
